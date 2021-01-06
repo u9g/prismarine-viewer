@@ -14,6 +14,11 @@ bot.once('spawn', () => {
   mineflayerViewer(bot, { firstPerson: true, port: 3000 })
 
   const path = [bot.entity.position.clone()]
+
+  setTimeout(() => {
+    bot.viewer.firstPerson = false
+  }, 3000)
+
   bot.on('move', () => {
     if (path[path.length - 1].distanceTo(bot.entity.position) > 1) {
       path.push(bot.entity.position.clone())
