@@ -11,10 +11,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Use Node.js 22.x
+    - name: Use Node.js 24.x
       uses: actions/setup-node@v1.4.4
       with:
-        node-version: 22.x
+        node-version: 24.x
+    - name: Install native dependencies
+      run: sudo apt-get update && sudo apt-get install -y libxi-dev libxext-dev libgl1-mesa-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
     - run: npm i && npm run lint
   build:
 
@@ -27,10 +29,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Use Node.js 22.x
+    - name: Use Node.js 24.x
       uses: actions/setup-node@v1
       with:
-        node-version: 22.x
+        node-version: 24.x
     - name: Setup Java JDK
       uses: actions/setup-java@v1
       with:
