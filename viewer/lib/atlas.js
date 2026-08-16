@@ -27,10 +27,9 @@ function loadImage (basePath, name) {
   return img
 }
 
-// Tiles keep their native resolution (some are 32x32 since 26.1); each atlas
-// entry carries its own u/v/su/sv extents, so consumers such as modelsBuilder
-// are resolution-agnostic. Animated textures (taller than wide) contribute
-// only their first frame, since model UV space maps to a single frame.
+// Tiles keep their native resolution (26.1 ships 32x32 block textures);
+// each atlas entry carries its own u/v/su/sv extents, so consumers such as
+// modelsBuilder are resolution-agnostic.
 function makeTextureAtlas (mcAssets) {
   const blocksTexturePath = path.join(mcAssets.directory, '/blocks')
   const textureFiles = fs.readdirSync(blocksTexturePath).filter(file => file.endsWith('.png'))
@@ -38,7 +37,15 @@ function makeTextureAtlas (mcAssets) {
 
   const tiles = textureFiles.map(file => {
     const img = loadImage(blocksTexturePath, file)
-    return { name: file.split('.')[0], img, w: img.width, h: Math.min(img.width, img.height) }
+    return {
+      name: file.split('.')[0],
+      img,
+      w: img.width,
+      // animated textures are vertical filmstrips (e.g. 16x512 = 32 frames);
+      // a model's UVs address a single square frame, so crop to the first
+      // one (height = width) rather than packing the whole strip
+      h: Math.min(img.width, img.height)
+    }
   })
 
   // shelf-pack: sort by height, lay out rows, then round the atlas up to a power of two
