@@ -117,7 +117,7 @@ supportedVersions.forEach(function (supportedVersion) {
             page.on('pageerror', pageerr => {
               exit(pageerr)
             })
-            setTimeout(() => {
+            const takeScreenshot = () => {
               const fileName = path.join(__dirname, `test_${supportedVersion}.png`)
               page.screenshot({ path: fileName }).then(() => {
                 const fileSize = fs.statSync(fileName).size
@@ -127,7 +127,32 @@ supportedVersions.forEach(function (supportedVersion) {
                   exit()
                 }
               }).catch(err => exit(err))
-            }, TIMEOUT_SCREENSHOT)
+            }
+
+            // Screenshot as soon as the scene is fully rendered (atlas applied, every
+            // queued section meshed, mesh count stable) instead of a fixed wait.
+            // TIMEOUT_SCREENSHOT remains the fallback deadline.
+            const deadline = Date.now() + TIMEOUT_SCREENSHOT
+            let stableFor = 0
+            let lastMeshes = -1
+            const poll = () => {
+              page.evaluate(() => {
+                if (!window.viewer) return null
+                const world = window.viewer.world
+                return {
+                  meshes: Object.keys(world.sectionMeshs).length,
+                  outstanding: world.sectionsOutstanding.size,
+                  textured: !!world.material.map
+                }
+              }).then((stats) => {
+                const rendered = stats && stats.textured && stats.meshes > 0 && stats.outstanding === 0
+                stableFor = rendered && stats.meshes === lastMeshes ? stableFor + 1 : 0
+                lastMeshes = stats ? stats.meshes : -1
+                if (stableFor >= 4 || Date.now() > deadline) takeScreenshot()
+                else setTimeout(poll, 500)
+              }).catch(err => exit(err))
+            }
+            poll()
           }).catch(err => exit(err))
         })
       }, TIMEOUT)
