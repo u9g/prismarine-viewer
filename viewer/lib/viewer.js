@@ -117,6 +117,7 @@ class Viewer {
   update () {
     TWEEN.update()
     this.entities.animate()
+    this.world.update()
   }
 
   async waitForChunksToRender () {
