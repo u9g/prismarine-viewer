@@ -17,20 +17,18 @@ function loadTexture (texture, cb) {
     return require('./utils.web').loadTexture(texture, cb)
   }
 
-  if (textureCache[texture]) {
-    cb(textureCache[texture])
-  } else {
-    let png
-    try {
-      png = PNG.sync.read(fs.readFileSync(path.resolve(__dirname, '../../public/', texture)))
-    } catch {
-      return
-    }
+  if (textureCache[texture]) return cb(textureCache[texture])
+  // bundled textures are files under public/; player skins are http(s) URLs
+  const read = /^https?:\/\//.test(texture)
+    ? fetch(texture).then(res => res.ok ? res.arrayBuffer() : Promise.reject(new Error(res.status))).then(Buffer.from)
+    : Promise.resolve().then(() => fs.readFileSync(path.resolve(__dirname, '../../public/', texture)))
+  read.then(data => {
+    const png = PNG.sync.read(data)
     const tex = new THREE.DataTexture(new Uint8Array(png.data), png.width, png.height, THREE.RGBAFormat)
     tex.needsUpdate = true
     textureCache[texture] = tex
     cb(tex)
-  }
+  }).catch(() => {})
 }
 
 function loadJSON (json, cb) {
