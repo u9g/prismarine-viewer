@@ -20,7 +20,12 @@ function loadTexture (texture, cb) {
   if (textureCache[texture]) {
     cb(textureCache[texture])
   } else {
-    const png = PNG.sync.read(fs.readFileSync(path.resolve(__dirname, '../../public/', texture)))
+    let png
+    try {
+      png = PNG.sync.read(fs.readFileSync(path.resolve(__dirname, '../../public/', texture)))
+    } catch {
+      return
+    }
     const tex = new THREE.DataTexture(new Uint8Array(png.data), png.width, png.height, THREE.RGBAFormat)
     tex.needsUpdate = true
     textureCache[texture] = tex

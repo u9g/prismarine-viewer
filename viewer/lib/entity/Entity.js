@@ -128,7 +128,17 @@ function addCube (attr, boneId, bone, cube, texWidth = 64, texHeight = 64) {
   }
 }
 
-function getMesh (texture, jsonModel) {
+function applyTexture (material, texture) {
+  texture.magFilter = THREE.NearestFilter
+  texture.minFilter = THREE.NearestFilter
+  texture.flipY = false
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  material.map = texture
+  material.needsUpdate = true
+}
+
+function getMesh (texture, jsonModel, override) {
   const bones = {}
 
   const geoData = {
@@ -188,29 +198,29 @@ function getMesh (texture, jsonModel) {
   mesh.bind(skeleton)
   mesh.scale.set(1 / 16, 1 / 16, 1 / 16)
 
-  loadTexture(texture, texture => {
-    texture.magFilter = THREE.NearestFilter
-    texture.minFilter = THREE.NearestFilter
-    texture.flipY = false
-    texture.wrapS = THREE.RepeatWrapping
-    texture.wrapT = THREE.RepeatWrapping
-    material.map = texture
-  })
+  if (texture) {
+    loadTexture(texture, texture => {
+      applyTexture(material, texture)
+      if (override) loadTexture(override, texture => applyTexture(material, texture))
+    })
+  } else {
+    loadTexture(override, texture => applyTexture(material, texture))
+  }
 
   return mesh
 }
 
 class Entity {
-  constructor (version, type, scene) {
+  constructor (version, type, scene, textures = {}) {
     const e = entities[type]
     if (!e) throw new Error(`Unknown entity ${type}`)
 
     this.mesh = new THREE.Object3D()
     for (const [name, jsonModel] of Object.entries(e.geometry)) {
       const texture = e.textures[name]
-      if (!texture) continue
+      if (!texture && !textures[name]) continue
       // console.log(JSON.stringify(jsonModel, null, 2))
-      const mesh = getMesh(texture.replace('textures', 'textures/' + version) + '.png', jsonModel)
+      const mesh = getMesh(texture && texture.replace('textures', 'textures/' + version) + '.png', jsonModel, textures[name])
       /* const skeletonHelper = new THREE.SkeletonHelper( mesh )
       skeletonHelper.material.linewidth = 2
       scene.add( skeletonHelper ) */

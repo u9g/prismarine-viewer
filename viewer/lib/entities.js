@@ -10,7 +10,14 @@ try { ({ createCanvas } = require('canvas')) } catch {}
 function getEntityMesh (entity, scene) {
   if (entity.name) {
     try {
-      const e = new Entity('1.16.4', entity.name, scene)
+      const isPlayer = entity.name === 'player' && entity.username !== undefined
+      const textures = {}
+      if (isPlayer) {
+        textures.default = `skin/${encodeURIComponent(entity.username)}`
+        if (entity.cape) textures.cape = `cape/${encodeURIComponent(entity.username)}`
+      }
+      const model = isPlayer && entity.skinModel === 'slim' ? 'player_slim' : entity.name
+      const e = new Entity('1.16.4', model, scene, textures)
 
       if (entity.username !== undefined && createCanvas) {
         const canvas = createCanvas(500, 100)

@@ -3,10 +3,11 @@ const THREE = require('three')
 
 const textureCache = {}
 function loadTexture (texture, cb) {
-  if (!textureCache[texture]) {
-    textureCache[texture] = new THREE.TextureLoader().load(texture)
-  }
-  cb(textureCache[texture])
+  if (textureCache[texture]) return cb(textureCache[texture])
+  new THREE.TextureLoader().load(texture, loaded => {
+    textureCache[texture] = loaded
+    cb(loaded)
+  }, undefined, () => {})
 }
 
 function loadJSON (url, callback) {
