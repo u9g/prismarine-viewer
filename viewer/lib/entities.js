@@ -50,7 +50,6 @@ function getEntityMesh (entity, scene) {
   return cube
 }
 
-// mobs whose model applies AnimationUtils.animateZombieArms instead of the humanoid arm swing
 const zombieArmMobs = new Set(['zombie', 'husk', 'drowned', 'zombie_villager', 'zombified_piglin'])
 
 // Vanilla rotations are in a y-down model space; this model is y-up, so x and z angles are negated
@@ -61,7 +60,6 @@ function animateWalk (mesh, ticks) {
   w.age += ticks
   if (!lastPos) return
 
-  // LivingEntity.calculateEntityAnimation / WalkAnimationState
   if (w.riding) {
     w.speed = 0
     w.pos = 0
@@ -72,7 +70,6 @@ function animateWalk (mesh, ticks) {
     w.pos += w.speed * ticks
   }
 
-  // HumanoidModel.setupAnim
   const { leftArm, rightArm, leftLeg, rightLeg } = w.limbs
   const { speed, pos } = w
   const t = pos * 0.6662
@@ -87,7 +84,6 @@ function animateWalk (mesh, ticks) {
     rightLeg.rotation.set(1.4137167, Math.PI / 10, -0.07853982)
   }
 
-  // AnimationUtils.animateZombieArms (no attack) + bobArms
   if (w.zombieArms) {
     const age = w.age
     leftArm.rotation.set(Math.PI / 2.25 + Math.sin(age * 0.067) * 0.05, 0.1, Math.cos(age * 0.09) * 0.05 + 0.05)
