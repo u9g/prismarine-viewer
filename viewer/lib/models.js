@@ -154,6 +154,7 @@ function renderLiquid (world, cursor, texture, type, biome, water, attr) {
         (pos[2] ? 1 : 0) + (cursor.z & 15) - 8)
       attr.t_normals.push(...dir)
       attr.t_uvs.push(pos[3] * su + u, pos[4] * sv * (pos[1] ? 1 : height) + v)
+      attr.t_animations.push(texture.frames || 1, texture.frametime || 1)
       attr.t_colors.push(tint[0], tint[1], tint[2])
     }
   }
@@ -321,6 +322,7 @@ function renderElement (world, cursor, element, doAO, attr, globalMatrix, global
       const baseu = (pos[3] - 0.5) * uvcs - (pos[4] - 0.5) * uvsn + 0.5
       const basev = (pos[3] - 0.5) * uvsn + (pos[4] - 0.5) * uvcs + 0.5
       attr.uvs.push(baseu * su + u, basev * sv + v)
+      attr.animations.push(eFace.texture.frames || 1, eFace.texture.frametime || 1)
 
       let light = 1
       if (doAO) {
@@ -371,10 +373,12 @@ function getSectionGeometry (sx, sy, sz, world, blocksStates) {
     normals: [],
     colors: [],
     uvs: [],
+    animations: [],
     t_positions: [],
     t_normals: [],
     t_colors: [],
     t_uvs: [],
+    t_animations: [],
     indices: []
   }
 
@@ -436,16 +440,19 @@ function getSectionGeometry (sx, sy, sz, world, blocksStates) {
   attr.normals.push(...attr.t_normals)
   attr.colors.push(...attr.t_colors)
   attr.uvs.push(...attr.t_uvs)
+  attr.animations.push(...attr.t_animations)
 
   delete attr.t_positions
   delete attr.t_normals
   delete attr.t_colors
   delete attr.t_uvs
+  delete attr.t_animations
 
   attr.positions = new Float32Array(attr.positions)
   attr.normals = new Float32Array(attr.normals)
   attr.colors = new Float32Array(attr.colors)
   attr.uvs = new Float32Array(attr.uvs)
+  attr.animations = new Float32Array(attr.animations)
 
   return attr
 }
