@@ -4,9 +4,9 @@ const THREE = require('three')
 const textureCache = {}
 function loadTexture (texture, cb) {
   if (!textureCache[texture]) {
-    textureCache[texture] = new THREE.TextureLoader().load(texture)
+    textureCache[texture] = new Promise(resolve => new THREE.TextureLoader().load(texture, resolve))
   }
-  cb(textureCache[texture])
+  textureCache[texture].then(cb)
 }
 
 function loadJSON (url, callback) {
