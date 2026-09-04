@@ -38,16 +38,16 @@ class Viewer {
   }
 
   setVersion (version) {
-    version = getVersion(version)
-    if (version === null) {
+    const assetsVersion = getVersion(version)
+    if (assetsVersion === null) {
       const msg = `${version} is not supported`
       window.alert(msg)
       console.log(msg)
       return false
     }
-    console.log('Using version: ' + version)
+    console.log(`Using version: ${version} (assets: ${assetsVersion})`)
     this.version = version
-    this.world.setVersion(version)
+    this.world.setVersion(version, assetsVersion)
     this.entities.clear()
     this.primitives.clear()
     return true
