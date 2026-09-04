@@ -39,6 +39,9 @@ function getEntityMesh (entity, scene) {
 
         e.mesh.add(sprite)
       }
+      const limbs = ['leftArm', 'rightArm', 'leftLeg', 'rightLeg'].map(name => e.mesh.getObjectByName(name))
+      if (limbs.every(Boolean)) e.mesh.walk = { limbs, lastPos: null, speed: 0, pos: 0 }
+
       return e.mesh
     } catch (err) {
       console.log(err)
@@ -52,10 +55,40 @@ function getEntityMesh (entity, scene) {
   return cube
 }
 
+function animateWalk (mesh, ticks) {
+  const { limbs, lastPos } = mesh.walk
+  mesh.walk.lastPos = mesh.position.clone()
+  if (!lastPos) return
+  const moved = Math.hypot(mesh.position.x - lastPos.x, mesh.position.z - lastPos.z)
+
+  const target = Math.min(1, moved / ticks * 4)
+  mesh.walk.speed += (target - mesh.walk.speed) * (1 - Math.pow(0.6, ticks))
+  mesh.walk.pos += mesh.walk.speed * ticks
+
+  const [leftArm, rightArm, leftLeg, rightLeg] = limbs
+  const { speed, pos } = mesh.walk
+  const t = pos * 0.6662
+  leftArm.rotation.x = Math.cos(t) * speed
+  rightArm.rotation.x = Math.cos(t + Math.PI) * speed
+  leftLeg.rotation.x = Math.cos(t + Math.PI) * 1.4 * speed
+  rightLeg.rotation.x = Math.cos(t) * 1.4 * speed
+}
+
 class Entities {
   constructor (scene) {
     this.scene = scene
     this.entities = {}
+    this.lastAnimate = performance.now()
+  }
+
+  animate () {
+    const now = performance.now()
+    const ticks = (now - this.lastAnimate) / 50
+    this.lastAnimate = now
+    if (ticks === 0) return
+    for (const mesh of Object.values(this.entities)) {
+      if (mesh.walk) animateWalk(mesh, ticks)
+    }
   }
 
   clear () {
@@ -72,6 +105,7 @@ class Entities {
       if (!mesh) return
       this.entities[entity.id] = mesh
       this.scene.add(mesh)
+      if (entity.pos) mesh.position.set(entity.pos.x, entity.pos.y, entity.pos.z)
     }
 
     const e = this.entities[entity.id]
