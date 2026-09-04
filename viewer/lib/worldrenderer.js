@@ -14,6 +14,7 @@ class WorldRenderer {
     this.sectionMeshs = {}
     this.active = false
     this.version = undefined
+    this.assetsVersion = undefined
     this.scene = scene
     this.loadedChunks = {}
     this.sectionsOutstanding = new Set()
@@ -75,8 +76,9 @@ class WorldRenderer {
     }
   }
 
-  setVersion (version) {
+  setVersion (version, assetsVersion = version) {
     this.version = version
+    this.assetsVersion = assetsVersion
     this.resetWorld()
     this.active = true
     for (const worker of this.workers) {
@@ -87,7 +89,7 @@ class WorldRenderer {
   }
 
   updateTexturesData () {
-    loadTexture(this.texturesDataUrl || `textures/${this.version}.png`, texture => {
+    loadTexture(this.texturesDataUrl || `textures/${this.assetsVersion}.png`, texture => {
       texture.magFilter = THREE.NearestFilter
       texture.minFilter = THREE.NearestFilter
       texture.flipY = false
@@ -97,7 +99,7 @@ class WorldRenderer {
     const loadBlockStates = () => {
       return new Promise(resolve => {
         if (this.blockStatesData) return resolve(this.blockStatesData)
-        return loadJSON(`blocksStates/${this.version}.json`, resolve)
+        return loadJSON(`blocksStates/${this.assetsVersion}.json`, resolve)
       })
     }
     loadBlockStates().then((blockStates) => {
