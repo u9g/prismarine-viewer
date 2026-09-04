@@ -22,6 +22,15 @@ class WorldRenderer {
     this.texturesDataUrl = undefined
 
     this.material = new THREE.MeshLambertMaterial({ vertexColors: true, transparent: true, alphaTest: 0.1 })
+    // Animated textures are packed as vertical runs of tiles; each vertex
+    // carries (frames, frametime) and the shader steps down the run in ticks.
+    this.uniforms = { time: { value: 0 }, tileHeight: { value: 0 } }
+    this.material.onBeforeCompile = (shader) => {
+      Object.assign(shader.uniforms, this.uniforms)
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', 'attribute vec2 animation;\nuniform float time;\nuniform float tileHeight;\n#include <common>')
+        .replace('#include <uv_vertex>', '#include <uv_vertex>\n#ifdef USE_UV\nvUv.y += mod(floor(time / animation.y), animation.x) * tileHeight;\n#endif')
+    }
 
     this.workers = []
     for (let i = 0; i < numWorkers; i++) {
@@ -48,6 +57,7 @@ class WorldRenderer {
           geometry.setAttribute('normal', new THREE.BufferAttribute(data.geometry.normals, 3))
           geometry.setAttribute('color', new THREE.BufferAttribute(data.geometry.colors, 3))
           geometry.setAttribute('uv', new THREE.BufferAttribute(data.geometry.uvs, 2))
+          geometry.setAttribute('animation', new THREE.BufferAttribute(data.geometry.animations, 2))
           geometry.setIndex(data.geometry.indices)
 
           mesh = new THREE.Mesh(geometry, this.material)
@@ -91,7 +101,9 @@ class WorldRenderer {
       texture.magFilter = THREE.NearestFilter
       texture.minFilter = THREE.NearestFilter
       texture.flipY = false
+      this.uniforms.tileHeight.value = 16 / texture.image.height
       this.material.map = texture
+      this.material.needsUpdate = true
     })
 
     const loadBlockStates = () => {
@@ -105,6 +117,10 @@ class WorldRenderer {
         worker.postMessage({ type: 'blockStates', json: blockStates })
       }
     })
+  }
+
+  update () {
+    this.uniforms.time.value = performance.now() / 50
   }
 
   addColumn (x, z, chunk) {
