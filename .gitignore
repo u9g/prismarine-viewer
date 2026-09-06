@@ -12,3 +12,4 @@ examples/standalone/public/textures/
 examples/standalone/public/blocksStates/
 *.DS_Store
 test/server_*
+public/worldBounds.json

@@ -24,7 +24,7 @@ function createMesher (post) {
     if (!value) {
       delete dirtySections[key]
       post({ type: 'sectionFinished', key })
-    } else if (chunk && chunk.sections[Math.floor(y / 16)]) {
+    } else if (chunk && chunk.sections[(y - (chunk.minY ?? 0)) / 16]) {
       dirtySections[key] = value
     } else {
       post({ type: 'sectionFinished', key })
@@ -63,7 +63,7 @@ function createMesher (post) {
       y = parseInt(y, 10)
       z = parseInt(z, 10)
       const chunk = world.getColumn(x, z)
-      if (chunk && chunk.sections[Math.floor(y / 16)]) {
+      if (chunk && chunk.sections[(y - (chunk.minY ?? 0)) / 16]) {
         delete dirtySections[key]
         const geometry = getSectionGeometry(x, y, z, world, blocksStates)
         const transferable = [geometry.positions.buffer, geometry.normals.buffer, geometry.colors.buffer, geometry.uvs.buffer, geometry.animations.buffer]
