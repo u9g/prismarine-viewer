@@ -101,13 +101,10 @@ class WorldRenderer {
   setVersion (version, assetsVersion = version) {
     this.version = version
     this.assetsVersion = assetsVersion
-    this.boundsReady = new Promise(resolve => {
-      loadJSON('worldBounds.json', (bounds) => {
-        const { minY = 0, worldHeight = 256 } = bounds[version] ?? bounds[assetsVersion] ?? {}
-        this.minY = minY
-        this.worldHeight = worldHeight
-        resolve()
-      })
+    this.boundsReady = this.host.loadJSON('worldBounds.json').then((bounds) => {
+      const { minY = 0, worldHeight = 256 } = bounds[version] ?? bounds[assetsVersion] ?? {}
+      this.minY = minY
+      this.worldHeight = worldHeight
     })
     this.resetWorld()
     this.active = true
