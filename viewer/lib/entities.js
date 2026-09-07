@@ -5,6 +5,8 @@ const Entity = require('./entity/Entity')
 const { dispose3 } = require('./dispose')
 const { defaultHost } = require('./host')
 
+const reportedMissingModels = new Set()
+
 function getEntityMesh (entity, scene, host) {
   if (entity.name) {
     try {
@@ -35,7 +37,11 @@ function getEntityMesh (entity, scene, host) {
 
       return e.mesh
     } catch (err) {
-      console.log(err)
+      // An entity type without a model is reported once and drawn as a box.
+      if (!reportedMissingModels.has(entity.name)) {
+        reportedMissingModels.add(entity.name)
+        console.log(err)
+      }
     }
   }
 
