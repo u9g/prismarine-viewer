@@ -2,12 +2,16 @@ const THREE = require('three')
 const TWEEN = require('@tweenjs/tween.js')
 
 const Entity = require('./entity/Entity')
+const { getItemMesh, animateItem } = require('./entity/Item')
 const { dispose3 } = require('./dispose')
 const { defaultHost } = require('./host')
 
 const reportedMissingModels = new Set()
 
-function getEntityMesh (entity, scene, host) {
+function getEntityMesh (entity, scene, host, version) {
+  // A dropped item is its own item's model, and the stack only arrives after the spawn.
+  if (entity.itemName) return getItemMesh(entity.itemName, version, host)
+  if (entity.name === 'item') return null
   if (entity.name) {
     try {
       const textures = {}
@@ -101,6 +105,11 @@ class Entities {
     this.lastAnimate = host.now()
   }
 
+  setVersion (version) {
+    this.version = version
+    this.clear()
+  }
+
   animate () {
     const now = this.host.now()
     const ticks = (now - this.lastAnimate) / 50
@@ -108,6 +117,7 @@ class Entities {
     if (ticks === 0) return
     for (const mesh of Object.values(this.entities)) {
       if (mesh.walk) animateWalk(mesh, ticks)
+      if (mesh.item) animateItem(mesh, ticks)
     }
   }
 
@@ -120,10 +130,18 @@ class Entities {
   }
 
   update (entity) {
+    // A dropped item's stack arrives after its spawn and can change; its mesh is that stack's model.
+    const known = this.entities[entity.id]
+    if (known && entity.itemName !== undefined && known.itemName !== entity.itemName) {
+      this.scene.remove(known)
+      dispose3(known)
+      delete this.entities[entity.id]
+    }
     if (!this.entities[entity.id]) {
       if (!entity.pos) return
-      const mesh = getEntityMesh(entity, this.scene, this.host)
+      const mesh = getEntityMesh(entity, this.scene, this.host, this.version)
       if (!mesh) return
+      mesh.itemName = entity.itemName
       this.entities[entity.id] = mesh
       this.scene.add(mesh)
       if (entity.pos) mesh.position.set(entity.pos.x, entity.pos.y, entity.pos.z)
